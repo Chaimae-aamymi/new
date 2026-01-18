@@ -94,7 +94,16 @@ export const generateRecipeImage = async (recipeTitle: string) => {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
-        parts: [{ text: `Realistic, appetizing photo of ${recipeTitle} food dish. Professional food photography, close-up of the finished dish only, garnished beautifully, warm lighting, high quality, 4k, no people, no background text or watermarks. ONLY show the prepared food dish.` }]
+        parts: [{ text: `Create a food photograph ONLY of the finished ${recipeTitle} dish. REQUIREMENTS:
+- Show ONLY the prepared food on a plate or serving dish
+- Close-up food photography, gourmet style
+- Warm, professional lighting
+- Beautifully plated and garnished
+- 4K quality, high resolution
+- White or neutral background
+- NO landscapes, NO nature, NO scenery, NO people
+- ONLY the food dish itself, nothing else
+- The dish must clearly look like: ${recipeTitle}` }]
       },
       config: {
         imageConfig: { aspectRatio: "16:9" }
