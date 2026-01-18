@@ -28,6 +28,7 @@ export interface Recipe {
   prepTime: string;
   difficulty: 'Facile' | 'Moyen' | 'Difficile' | string;
   imageUrl?: string;
+  isFavorite?: boolean;
 }
 
 export interface User {

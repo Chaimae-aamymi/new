@@ -143,7 +143,7 @@ const App: React.FC = () => {
       const recipesWithImages = await Promise.all(suggested.map(async (recipe: Recipe) => {
         let imageUrl = null;
         try { imageUrl = await generateRecipeImage(recipe.title); } catch(e) {}
-        return { ...recipe, imageUrl: imageUrl || `https://picsum.photos/seed/${recipe.title}/800/450` };
+        return { ...recipe, imageUrl: imageUrl || `https://picsum.photos/seed/${recipe.title}/800/450`, isFavorite: false };
       }));
       setRecipes(recipesWithImages);
     } catch (err) {
@@ -151,6 +151,12 @@ const App: React.FC = () => {
     } finally {
       setLoadingRecipes(false);
     }
+  };
+
+  const handleToggleFavorite = (idx: number) => {
+    setRecipes(prev => prev.map((recipe, i) => 
+      i === idx ? { ...recipe, isFavorite: !recipe.isFavorite } : recipe
+    ));
   };
 
   if (!user) return <Auth onLogin={setUser} lang={lang} />;
@@ -290,6 +296,12 @@ const App: React.FC = () => {
                     <div className="relative h-[25rem] md:h-[30rem]">
                        <img src={recipe.imageUrl || 'https://picsum.photos/800/600'} className="w-full h-full object-cover" alt={recipe.title} />
                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                       <button
+                         onClick={() => handleToggleFavorite(idx)}
+                         className="absolute top-6 right-6 md:top-12 md:right-12 z-10 transition-all duration-300 transform hover:scale-125"
+                       >
+                         <i className={`fa-${recipe.isFavorite ? 'solid' : 'regular'} fa-heart text-3xl ${recipe.isFavorite ? 'text-red-500 drop-shadow-lg' : 'text-white/80 hover:text-white drop-shadow'}`}></i>
+                       </button>
                        <div className="absolute bottom-8 left-8 right-8 md:bottom-12 md:left-12 md:right-12">
                           <h3 className={`text-3xl md:text-5xl font-black text-white mb-4 tracking-tighter ${isRtl ? 'text-right' : 'text-left'}`}>{recipe.title}</h3>
                           <div className={`flex gap-4 ${isRtl ? 'flex-row-reverse' : 'flex-row'}`}>

@@ -94,7 +94,7 @@ export const generateRecipeImage = async (recipeTitle: string) => {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
-        parts: [{ text: `High-quality close up of ${recipeTitle}, gourmet food photography, soft lighting, 4k.` }]
+        parts: [{ text: `Realistic, appetizing photo of ${recipeTitle} food dish. Professional food photography, close-up of the finished dish only, garnished beautifully, warm lighting, high quality, 4k, no people, no background text or watermarks. ONLY show the prepared food dish.` }]
       },
       config: {
         imageConfig: { aspectRatio: "16:9" }
@@ -127,13 +127,18 @@ export const suggestRecipes = async (ingredients: string[], lang: Language) => {
     INGRÉDIENTS DISPONIBLES :
     ${ingredients.join(', ')}
 
+    CONSIGNE CRITIQUE - TU DOIS GÉNÉRER EXACTEMENT 3 RECETTES :
+    - Crée UNE LISTE DE 3 RECETTES différentes et créatives
+    - Privilégie les combinaisons qui utilisent plusieurs ingrédients disponibles
+    - Varie les types : une recette rapide, une classique, une créative
+
     CONSIGNE DE LANGUE CRITIQUE :
     - Tu DOIS répondre exclusivement en langue : ${targetLanguageName}.
     - TOUS les champs du JSON (titre, description, ingrédients, instructions, temps, difficulté) DOIVENT être traduits dans cette langue cible.
     - NE PAS laisser de texte en anglais.
     - Si la langue est l'arabe, écris de droite à gauche avec un vocabulaire riche.
 
-    FORMAT DE SORTIE : Réponds EXCLUSIVEMENT en JSON valide suivant le schéma fourni.`;
+    FORMAT DE SORTIE : Réponds EXCLUSIVEMENT en JSON valide suivant le schéma fourni. TABLEAU DE 3 OBJETS.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -159,8 +164,40 @@ export const suggestRecipes = async (ingredients: string[], lang: Language) => {
       }
     });
 
-    const results = JSON.parse(response.text || "[]");
-    return Array.isArray(results) ? results.filter(r => r && r.title) : [];
+    let results = JSON.parse(response.text || "[]");
+    results = Array.isArray(results) ? results.filter(r => r && r.title) : [];
+    
+    // Assure minimum 3 recettes
+    if (results.length < 3) {
+      console.warn(`Only ${results.length} recipes generated, retrying...`);
+      // Retry une fois si moins de 3
+      const retryResponse = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+                ingredients: { type: Type.ARRAY, items: { type: Type.STRING } },
+                instructions: { type: Type.ARRAY, items: { type: Type.STRING } },
+                prepTime: { type: Type.STRING },
+                difficulty: { type: Type.STRING }
+              },
+              required: ["title", "description", "ingredients", "instructions", "prepTime", "difficulty"]
+            }
+          }
+        }
+      });
+      const retryResults = JSON.parse(retryResponse.text || "[]");
+      results = Array.isArray(retryResults) ? retryResults.filter(r => r && r.title) : results;
+    }
+    
+    return results.slice(0, 3); // Max 3, min 1
   } catch (e) {
     console.error("Error parsing recipe response", e);
     return [];
