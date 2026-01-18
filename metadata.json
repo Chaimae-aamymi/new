@@ -1,0 +1,8 @@
+
+{
+  "name": "FrigoZen - Anti-Gaspillage Intelligent",
+  "description": "Une application pour familles et colocs afin de gérer le frigo et scanner les tickets de caisse.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
